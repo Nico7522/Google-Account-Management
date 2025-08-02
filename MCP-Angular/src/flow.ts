@@ -1,15 +1,16 @@
 import { Chat, genkit, Session } from 'genkit/beta';
 import {
   gemini15Flash,
-  gemini15Pro,
-  gemini20Flash,
   gemini20FlashLite,
+  gemini25FlashLite,
   googleAI,
 } from '@genkit-ai/googleai';
 import { z } from 'zod';
-import { log } from 'node:console';
 import { environment } from './environments/environment';
-const model = gemini15Flash;
+
+type Command = '1' | '2';
+
+const model = gemini25FlashLite;
 
 const ai = genkit({
   plugins: [googleAI({ apiKey: environment.API_KEY })],
@@ -21,27 +22,23 @@ export const chatFlow = ai.defineFlow(
   {
     name: 'chatFlow',
     inputSchema: z.object({
-      userInput: z.string(),
+      command: z.enum(['1', '2']),
       sessionId: z.string(),
       clearSession: z.boolean(),
     }),
   },
   async (
     {
-      userInput,
+      command,
       sessionId,
       clearSession,
     }: {
-      userInput: string;
+      command: Command;
       sessionId: string;
       clearSession: boolean;
     },
     { sendChunk }
   ) => {
-    if (userInput.length === 0) {
-      userInput = 'Hello, how are you?';
-    }
-
     let chat: Chat;
 
     if (clearSession) {
@@ -54,20 +51,19 @@ export const chatFlow = ai.defineFlow(
     chat = session.chat({
       sessionId: sessionId,
       model: model,
-      tools: [getMail],
+      tools: [getMail, getLoginUrl],
     });
-    const prompt = `Tu es un agent qui résume les emails de l'utilisateur.
-    TU NE DOIS Réponde qu'en MARKDOWN.
-    Tu dois répondre en français.
-    `;
-    const { stream } = chat.sendStream({ prompt: prompt });
+    const prompt = generatePrompt(command);
+
+    const { stream } = chat.sendStream({ prompt });
     for await (const chunk of stream) {
       for (const part of chunk.content) {
         if (part.text) {
           sendChunk(part.text);
-        } else if (part.toolResponse?.output) {
-          sendChunk(part.toolResponse.output as string);
         }
+        // else if (part.toolResponse?.output) {
+        //   sendChunk(part.toolResponse.output as string);
+        // }
       }
     }
   }
@@ -90,23 +86,24 @@ const getMail = ai.defineTool(
     return mails;
   }
 );
-const markdownRegex = /^\s*(```json)?((.|\n)*?)(```)?\s*$/i;
-function maybeStripMarkdown(withMarkdown: string) {
-  const mdMatch = markdownRegex.exec(withMarkdown);
-  if (!mdMatch) {
-    return withMarkdown;
+
+const getLoginUrl = ai.defineTool(
+  {
+    name: 'getLoginUrl',
+    description: 'Get the login URL for the user',
+    outputSchema: z.string(),
+  },
+  async () => {
+    const url = await login();
+    return url;
   }
-  return mdMatch[2];
-}
+);
 
 async function getMailFromAPI() {
-  console.log("[getMail] Appel de l'API pour récupérer les mails...");
   try {
-    const res = await fetch(
-      'http://localhost:3000/api/gmail/users/user_1753630455830/messages/full'
-    );
+    const res = await fetch(`${environment.API_URL}/mails`);
+
     if (!res.ok) {
-      console.error(`[getMail] Erreur API: ${res.status} ${res.statusText}`);
       return [
         {
           mailId: 'error',
@@ -117,10 +114,8 @@ async function getMailFromAPI() {
     }
     const response: { mailId: string; subject: string; body: string }[] =
       await res.json();
-    console.log(`[getMail] ${response.length} mails récupérés.`);
     return response;
   } catch (err) {
-    console.error("[getMail] Exception lors de l'appel API:", err);
     return [
       {
         mailId: 'error',
@@ -129,4 +124,40 @@ async function getMailFromAPI() {
       },
     ];
   }
+}
+
+async function login() {
+  try {
+    const res = await fetch(`${environment.API_URL}/auth/login`);
+    if (!res.ok) {
+      console.log(res);
+
+      throw new Error(`Erreur lors de la connexion: ${res.status}`);
+    }
+    const { url } = await res.json();
+    return url as string;
+  } catch (error) {
+    throw new Error(
+      `Erreur lors de la connexion: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+}
+
+function generatePrompt(command: Command) {
+  let prompt = 'Salut, comment ça va ?';
+  switch (command) {
+    case '1':
+      prompt = "Utilise getLoginUrl pour récupérer l'url de connexion.";
+      break;
+    case '2':
+      prompt = `Répond uniquement en markdown.
+    Tu es un agent qui résume les emails de l'utilisateur.
+    Tu dois répondre en français.
+    Donne mes mails stp. Utilise getMail pour récupérer les mails.`;
+      break;
+  }
+
+  return prompt;
 }
