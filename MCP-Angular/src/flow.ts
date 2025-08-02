@@ -1,4 +1,3 @@
-const API_KEY = 'AIzaSyDb6PgI1BIM1bsnH472svZ98q0ybir7oqU';
 import { Chat, genkit, Session } from 'genkit/beta';
 import {
   gemini15Flash,
@@ -8,10 +7,12 @@ import {
   googleAI,
 } from '@genkit-ai/googleai';
 import { z } from 'zod';
+import { log } from 'node:console';
+import { environment } from './environments/environment';
 const model = gemini15Flash;
 
 const ai = genkit({
-  plugins: [googleAI({ apiKey: API_KEY })],
+  plugins: [googleAI({ apiKey: environment.API_KEY })],
   model,
 });
 let session: Session;
@@ -24,7 +25,6 @@ export const chatFlow = ai.defineFlow(
       sessionId: z.string(),
       clearSession: z.boolean(),
     }),
-    streamSchema: z.string(),
   },
   async (
     {
@@ -56,8 +56,11 @@ export const chatFlow = ai.defineFlow(
       model: model,
       tools: [getMail],
     });
-    const prompt = userInput;
-    const { stream } = chat.sendStream({ prompt });
+    const prompt = `Tu es un agent qui résume les emails de l'utilisateur.
+    TU NE DOIS Réponde qu'en MARKDOWN.
+    Tu dois répondre en français.
+    `;
+    const { stream } = chat.sendStream({ prompt: prompt });
     for await (const chunk of stream) {
       for (const part of chunk.content) {
         if (part.text) {
@@ -74,10 +77,17 @@ const getMail = ai.defineTool(
   {
     name: 'getMail',
     description: 'Get the mail of the user',
-    outputSchema: z.string(),
+    outputSchema: z.array(
+      z.object({
+        mailId: z.string(),
+        subject: z.string(),
+        body: z.string(),
+      })
+    ),
   },
-  async (input) => {
-    return 'sujet : "payement imoortant refusé, body: "un payement a été refusé, contacter le client au plus vite au numéro 06 06 06 06 06 pour en savoir plus."';
+  async () => {
+    const mails = await getMailFromAPI();
+    return mails;
   }
 );
 const markdownRegex = /^\s*(```json)?((.|\n)*?)(```)?\s*$/i;
@@ -87,4 +97,36 @@ function maybeStripMarkdown(withMarkdown: string) {
     return withMarkdown;
   }
   return mdMatch[2];
+}
+
+async function getMailFromAPI() {
+  console.log("[getMail] Appel de l'API pour récupérer les mails...");
+  try {
+    const res = await fetch(
+      'http://localhost:3000/api/gmail/users/user_1753630455830/messages/full'
+    );
+    if (!res.ok) {
+      console.error(`[getMail] Erreur API: ${res.status} ${res.statusText}`);
+      return [
+        {
+          mailId: 'error',
+          subject: 'Erreur lors de la récupération des mails',
+          body: `Impossible de récupérer les mails (code: ${res.status})`,
+        },
+      ];
+    }
+    const response: { mailId: string; subject: string; body: string }[] =
+      await res.json();
+    console.log(`[getMail] ${response.length} mails récupérés.`);
+    return response;
+  } catch (err) {
+    console.error("[getMail] Exception lors de l'appel API:", err);
+    return [
+      {
+        mailId: 'error',
+        subject: 'Erreur lors de la récupération des mails',
+        body: `Exception: ${err}`,
+      },
+    ];
+  }
 }
