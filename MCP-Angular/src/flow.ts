@@ -1,4 +1,3 @@
-const API_KEY = 'AIzaSyDb6PgI1BIM1bsnH472svZ98q0ybir7oqU';
 import { Chat, genkit, Session } from 'genkit/beta';
 import {
   gemini15Flash,
@@ -11,7 +10,7 @@ import { z } from 'zod';
 const model = gemini15Flash;
 
 const ai = genkit({
-  plugins: [googleAI({ apiKey: API_KEY })],
+  plugins: [googleAI({ apiKey: 'API_KEY' })],
   model,
 });
 let session: Session;
