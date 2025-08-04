@@ -4,8 +4,11 @@ import cors from "cors";
 import { oauth2Client, SCOPES } from "./config/google-config";
 dotenv.config();
 const app = express();
-
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:4200",
+  })
+);
 app.use(express.json());
 
 app.get("/api/auth/login", async (req, res) => {
@@ -22,20 +25,30 @@ app.get("/api/auth/login", async (req, res) => {
   }
 });
 
-app.get("/api/auth/login/callback", async (req, res) => {
+app.get("/api/auth/callback", async (req, res) => {
   const { code } = req.query;
+
   if (!code) {
     return res.status(400).json({ error: "Code is required" });
   }
 
   try {
     const { tokens } = await oauth2Client.getToken(code as string);
-    oauth2Client.setCredentials(tokens);
-    res.status(200).json({ message: "Authentication successful", tokens });
-  } catch (error) {
-    console.log("Authentication error:", error);
 
-    res.status(500).json({ error: "Authentication failed" });
+    oauth2Client.setCredentials(tokens);
+
+    return res.status(200).json({
+      message: "Authentication successful",
+      tokens: {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        scope: tokens.scope,
+        tokenType: tokens.token_type,
+        expiryDate: tokens.expiry_date,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Authentication failed" });
   }
 });
 
