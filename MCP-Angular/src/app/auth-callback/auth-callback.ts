@@ -1,22 +1,27 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  OnInit,
+} from '@angular/core';
 import { AuthCallbackService } from './auth-callback-service';
-import { JsonPipe } from '@angular/common';
+import { RouterLink, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-auth-callback',
-  imports: [JsonPipe],
+  imports: [RouterLink, RouterModule],
   templateUrl: './auth-callback.html',
   styleUrl: './auth-callback.scss',
-  providers: [AuthCallbackService],
 })
 export class AuthCallback implements OnInit {
   readonly #callBackService = inject(AuthCallbackService);
-  code = input('');
+  code = input.required<string>();
   tokens = this.#callBackService.authCode;
   ngOnInit(): void {
-    // this.#callBackService.code.set(this.code());
-    this.#callBackService
-      .getAuthCode(this.code())
-      .subscribe((res) => console.log(res));
+    if (this.code()) {
+      this.#callBackService.setCode(this.code());
+    }
   }
 }

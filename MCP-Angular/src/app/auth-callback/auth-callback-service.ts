@@ -1,41 +1,43 @@
-import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, resource, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
+import z from 'zod';
+import { TokensResponse } from '../shared/interfaces/tokens-response-interface';
+import { UserService } from '../shared/user/user-service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class AuthCallbackService {
-  readonly #httpClient = inject(HttpClient);
-  code = signal(
-    '4/0AVMBsJg4BgJsrrl5zAPdE8dYy_UKdu2h1Ywp0HiCfcMdu8aqUciuIo87_2CjzVogWDlgyg'
-  );
-  authCode = resource({
-    params: () => ({
-      code: this.code(),
-    }),
-    loader: async ({
-      params,
-    }): Promise<{ accessToken: string; refreshToken: string }> => {
+  readonly #userService = inject(UserService);
+  code = signal<string | undefined>(undefined);
+  authCode = resource<TokensResponse, string | undefined>({
+    params: this.code,
+    loader: async ({ params }): Promise<TokensResponse> => {
       const res = await fetch(
-        `${environment.API_URL}/auth/login/callback?code=${params.code}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      ).then((response) => {
-        return response.json();
-      });
-
+        `${environment.API_URL}/auth/callback?code=${params}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
+      const parsedData = this.tokensSchema.parse(data);
+      this.#userService.setTokens(parsedData.tokens);
       return {
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
+        message: parsedData.message,
+        tokens: parsedData.tokens,
       };
     },
   });
-  getAuthCode(code: string) {
-    return this.#httpClient.get<{ accessToken: string; refreshToken: string }>(
-      `${environment.API_URL}/auth/login/callback?code=${code}`
-    );
+
+  tokensSchema = z.object({
+    message: z.string(),
+    tokens: z.object({
+      accessToken: z.string(),
+      refreshToken: z.string(),
+    }),
+  });
+
+  setCode(code: string) {
+    this.code.set(code);
   }
 }

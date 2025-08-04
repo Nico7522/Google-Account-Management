@@ -5,14 +5,14 @@ import { streamFlow } from 'genkit/beta/client';
   providedIn: 'root',
 })
 export class ChatService {
-  readonly #command = signal('1');
+  readonly #command = signal<string | undefined>(undefined);
   message = resource({
-    params: () => ({ command: this.#command() }),
+    params: this.#command,
     stream: async () => {
       const data = signal<{ value: string } | { error: Error }>({
         value: '',
       });
-      this.stream().then(async (res) => {
+      this.stream(this.#command() || '').then(async (res) => {
         for await (const chunk of res.stream) {
           data.update((prev) => {
             if ('value' in prev) {
@@ -30,11 +30,11 @@ export class ChatService {
   setCommand(command: string) {
     this.#command.set(command);
   }
-  async stream() {
+  async stream(command: string) {
     return streamFlow({
       url: this.getChatFlowUrl(),
       input: {
-        command: this.#command(),
+        command,
         sessionId: '123',
         clearSession: true,
       },

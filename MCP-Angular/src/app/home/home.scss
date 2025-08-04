@@ -1,0 +1,119 @@
+@use "theme";
+.home-container {
+  min-height: 100vh;
+  background-color: theme.$color-dark;
+  color: theme.$color-light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden;
+}
+
+.home-header {
+  margin-top: 3rem;
+
+  .home-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: theme.$color-light;
+    margin: 0;
+    letter-spacing: -0.5px;
+
+    &::after {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: theme.$color-primary;
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+  }
+
+  .home-subtitle {
+    font-size: 1.25rem;
+    color: lighten(theme.$color-light, 10%);
+    margin-top: 0.75rem;
+    font-weight: 300;
+  }
+}
+
+.home-content {
+  max-width: 600px;
+  width: 100%;
+  margin: 2rem auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-intro {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: lighten(theme.$color-light, 15%);
+  margin-bottom: 2.5rem;
+
+  p {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.home-features {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  margin-top: 1rem;
+
+  li {
+    margin-bottom: 0.75rem;
+    position: relative;
+    padding-left: 1.5rem;
+    font-weight: 500;
+
+    &::before {
+      content: "•";
+      color: theme.$color-primary;
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+    }
+  }
+}
+
+.cta-button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: theme.$color-dark;
+  background-color: theme.$color-primary-light;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  align-self: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(theme.$color-primary, 0.3);
+  width: fit-content;
+
+  &:hover {
+    background-color: theme.$color-primary;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(theme.$color-primary, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.home-footer {
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: darken(theme.$color-light, 30%);
+  opacity: 0.7;
+}

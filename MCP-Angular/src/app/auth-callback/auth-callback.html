@@ -1,1 +1,8 @@
-<p>{{tokens.value()?.accessToken}}</p>
+@if(!tokens.error()){
+<p>Authentification réussie</p>
+<a [routerLink]="['/chat']">Accéder au chat</a>
+}
+@else {
+<p>{{tokens.error()}}</p>
+<a [routerLink]="['/']">Retour à la page d'accueil</a>
+}

@@ -1,4 +1,31 @@
-<button (click)="handleCommand('1')">Je veux l'url de connection</button>
-<button (click)="handleCommand('2')">Je veux mes mails</button>
+<!-- <div [innerHTML]="parsedMessage()"></div> -->
 
-<div [innerHTML]="parsedMessage()"></div>
+<div class="chat-container">
+    <!-- Barre de navigation supérieure -->
+    <header class="chat-header">
+        <button class="nav-button primary" (click)="handleCommand('1')">
+            Je veux me connecter
+        </button>
+        <button class="nav-button secondary" (click)="handleCommand('2')">
+            Je veux voir mes mails
+        </button>
+    </header>
+
+    <!-- Zone de messages -->
+    <main class="chat-messages" #messagesContainer>
+
+
+        <!--      <div *ngFor="let message of messages" [class]="message.sender">
+        <p class="message-text">{{ message.text }}</p>
+        <span class="message-time">{{ message.time | date:'HH:mm' }}</span>
+      </div> -->
+    </main>
+
+    <!-- Zone d'entrée -->
+    <footer class="chat-input-container">
+        <input type="text" class="chat-input" placeholder="Écrivez un message..." />
+        <button class="send-button">
+            Envoyer
+        </button>
+    </footer>
+</div>
