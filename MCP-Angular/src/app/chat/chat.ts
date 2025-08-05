@@ -10,10 +10,13 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ChatService } from './chat-service';
 import { UserService } from '../shared/user/user-service';
 import { afterNextRender, AfterRenderRef } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Command } from '../shared/interfaces/command';
 
 @Component({
   selector: 'app-chat',
-  imports: [],
+  imports: [DatePipe, FormsModule],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
@@ -23,12 +26,20 @@ export class Chat {
   readonly #userService = inject(UserService);
   tokens = this.#userService.tokens;
   message = this.#chatService.message;
-  parsedMessage = computed(() =>
-    marked.parse(this.message.value() || '').toString()
-  );
+  chat = this.#chatService.chat;
+  userInput = '';
 
-  handleCommand(command: string) {
-    this.#chatService.setCommand(command);
+  handleCommand(command: Command) {
+    this.#chatService.updateChatFromUserInput(command);
+  }
+
+  onSubmit() {
+    this.#chatService.updateChatFromUserInput(this.userInput);
+    this.userInput = '';
+  }
+
+  logout() {
+    this.#userService.logout();
   }
   constructor() {}
 }

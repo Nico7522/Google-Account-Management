@@ -24,4 +24,10 @@ export class UserService {
     localStorage.setItem('refreshToken', tokens.refreshToken);
     this.#tokens.set(tokens);
   }
+
+  logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    this.#tokens.set(undefined);
+  }
 }

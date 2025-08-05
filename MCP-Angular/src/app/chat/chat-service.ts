@@ -1,22 +1,28 @@
-import { Injectable, resource, signal } from '@angular/core';
+import { Injectable, linkedSignal, resource, signal } from '@angular/core';
 import { streamFlow } from 'genkit/beta/client';
+import { Chat, Role } from '../shared/interfaces/chat-interface';
+import { marked } from 'marked';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
-  readonly #command = signal<string | undefined>(undefined);
+  userInput = signal<string | undefined>(undefined);
   message = resource({
-    params: this.#command,
+    params: this.userInput,
     stream: async () => {
-      const data = signal<{ value: string } | { error: Error }>({
-        value: '',
+      const data = signal<
+        { value: { id: number; text: string } } | { error: Error }
+      >({
+        value: { id: 0, text: '' },
       });
-      this.stream(this.#command() || '').then(async (res) => {
+      this.stream(this.userInput() || '').then(async (res) => {
+        const id = Math.floor(Math.random() * 2000);
+
         for await (const chunk of res.stream) {
           data.update((prev) => {
             if ('value' in prev) {
-              return { value: prev.value + chunk };
+              return { value: { id: id, text: prev.value.text + chunk } };
             } else {
               return { error: chunk };
             }
@@ -27,21 +33,40 @@ export class ChatService {
     },
   });
 
-  setCommand(command: string) {
-    this.#command.set(command);
-  }
-  async stream(command: string) {
-    return streamFlow({
-      url: this.getChatFlowUrl(),
-      input: {
-        command,
-        sessionId: '123',
-        clearSession: true,
-      },
-    });
-  }
+  sessionId = linkedSignal<string, string>({
+    source: () => this.message.value()?.text || '',
+    computation: (_source, previous): string =>
+      !previous
+        ? Date.now() + '' + Math.floor(Math.random() * 1000000000)
+        : previous.value,
+  });
 
-  getChatFlowUrl(): string {
+  clearSession = linkedSignal({
+    source: () => this.message.value() || '',
+    computation: (_source, previous): boolean => !previous,
+  });
+
+  chat = linkedSignal<{ id: number; text: string }, Chat[]>({
+    source: () => this.message.value() || { id: 0, text: '' },
+    computation: (source, previous): Chat[] => {
+      if (source.id === 0) {
+        return previous?.value || [];
+      }
+      let message = previous?.value.find((item) => item.id === source.id);
+      let filtered = previous?.value.filter((item) => item.id !== source.id);
+      if (message && filtered) {
+        return [
+          ...filtered,
+          { ...message, text: marked.parse(source.text).toString() },
+        ];
+      }
+
+      const chatItem = this.chatItem(source.text, 'AGENT', source.id);
+      return previous ? [...previous.value, chatItem] : [chatItem];
+    },
+  });
+
+  #getChatFlowUrl(): string {
     const isServer = typeof window === 'undefined';
 
     if (isServer) {
@@ -50,5 +75,36 @@ export class ChatService {
     }
 
     return '/chatFlow';
+  }
+
+  updateChatFromUserInput(input: string) {
+    let text = input;
+    if (input === '1') {
+      text = 'Je voudrais me connecter à mon compte Gmail';
+    }
+    if (input === '2') {
+      text = 'Je voudrais voir mes 10 derniers mails';
+    }
+    const chatItem = this.chatItem(text, 'USER');
+    this.chat.update((prev) => [...prev, chatItem]);
+    this.userInput.set(input);
+  }
+
+  chatItem(text: string, role: Role, id?: number): Chat {
+    return {
+      id: id || Math.floor(Math.random() * 2000),
+      text: marked.parse(text).toString(),
+      role,
+    };
+  }
+  async stream(userInput: string) {
+    return streamFlow({
+      url: this.#getChatFlowUrl(),
+      input: {
+        userInput,
+        sessionId: this.sessionId(),
+        clearSession: this.clearSession(),
+      },
+    });
   }
 }

@@ -22,18 +22,18 @@ export const chatFlow = ai.defineFlow(
   {
     name: 'chatFlow',
     inputSchema: z.object({
-      command: z.enum(['1', '2']),
+      userInput: z.string(),
       sessionId: z.string(),
       clearSession: z.boolean(),
     }),
   },
   async (
     {
-      command,
+      userInput,
       sessionId,
       clearSession,
     }: {
-      command: Command;
+      userInput: string;
       sessionId: string;
       clearSession: boolean;
     },
@@ -53,7 +53,12 @@ export const chatFlow = ai.defineFlow(
       model: model,
       tools: [getMail, getLoginUrl],
     });
-    const prompt = generatePrompt(command);
+    let prompt = '';
+    if (userInput === '1' || userInput === '2') {
+      prompt = generatePrompt(userInput);
+    } else {
+      prompt = userInput;
+    }
 
     const { stream } = chat.sendStream({ prompt });
     for await (const chunk of stream) {
