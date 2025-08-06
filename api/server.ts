@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { oauth2Client, SCOPES } from "./config/google-config";
+import { google } from "googleapis";
+import { cleanEmailContent } from "./helpers/helpers";
 dotenv.config();
 const app = express();
 app.use(
@@ -53,14 +55,66 @@ app.get("/api/auth/callback", async (req, res) => {
 });
 
 app.post("/api/auth/logout", async (req, res) => {
-  const { token } = req.body;
-  if (!token) res.status(400).json({ error: "Token is required" });
+  const token = req.headers.authorization?.split(" ")[1];
+  console.log(token);
+
+  if (!token) return res.status(400).json({ error: "Token is required" });
 
   try {
     await oauth2Client.revokeToken(token);
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({ error: "Logout failed" });
+  }
+});
+
+app.get("/api/mails", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    oauth2Client.setCredentials({
+      access_token: token,
+    });
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+    const response = await gmail.users.messages.list({
+      userId: "me",
+      maxResults: 10,
+    });
+    const messages = response.data.messages || [];
+    const emails = await Promise.all(
+      messages.map(async (message) => {
+        const mailDetails = await gmail.users.messages.get({
+          userId: "me",
+          id: message.id || "",
+          format: "full",
+        });
+
+        return mailDetails;
+      })
+    );
+
+    const cleanedMails = [];
+    for (const email of emails) {
+      const body = cleanEmailContent(email.data);
+      const mailId = email.data.id ?? "";
+      const subject =
+        email?.data?.payload?.headers?.find((h) => h.name === "Subject")
+          ?.value ?? "";
+      cleanedMails.push({
+        mailId,
+        subject,
+        body,
+      });
+    }
+    res.status(200).json(cleanedMails);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ error: "Failed to get mails" });
   }
 });
 
