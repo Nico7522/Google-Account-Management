@@ -9,12 +9,14 @@ import { streamFlow } from 'genkit/beta/client';
 import { Chat, Role } from '../shared/interfaces/chat-interface';
 import { marked } from 'marked';
 import { ErrorService } from '../shared/error/error-service/error-service';
+import { UserService } from '../shared/user/user-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
   readonly #errorService = inject(ErrorService);
+  readonly #userService = inject(UserService);
   userInput = signal<string | undefined>(undefined);
   message = resource({
     params: this.userInput,
@@ -118,6 +120,7 @@ export class ChatService {
         userInput,
         sessionId: this.sessionId(),
         clearSession: this.clearSession(),
+        token: this.#userService.tokens()?.accessToken,
       },
     });
 

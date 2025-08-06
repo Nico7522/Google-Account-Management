@@ -23,6 +23,7 @@ export const chatFlow = ai.defineFlow(
     name: 'chatFlow',
     inputSchema: z.object({
       userInput: z.string(),
+      token: z.string().optional(),
       sessionId: z.string(),
       clearSession: z.boolean(),
     }),
@@ -30,10 +31,12 @@ export const chatFlow = ai.defineFlow(
   async (
     {
       userInput,
+      token,
       sessionId,
       clearSession,
     }: {
       userInput: string;
+      token?: string;
       sessionId: string;
       clearSession: boolean;
     },
@@ -54,21 +57,17 @@ export const chatFlow = ai.defineFlow(
     });
     let prompt = '';
     if (userInput === '1' || userInput === '2') {
-      prompt = generatePrompt(userInput);
+      prompt = generatePrompt(userInput, token ?? '');
     } else {
       prompt = userInput;
     }
     const { stream } = chat.sendStream({ prompt });
-    throw new Error('Attention');
 
     for await (const chunk of stream) {
       for (const part of chunk.content) {
         if (part.text) {
           sendChunk(part.text);
         }
-        // else if (part.toolResponse?.output) {
-        //   sendChunk(part.toolResponse.output as string);
-        // }
       }
     }
   }
@@ -78,6 +77,9 @@ const getMail = ai.defineTool(
   {
     name: 'getMail',
     description: 'Get the mail of the user',
+    inputSchema: z.object({
+      token: z.string(),
+    }),
     outputSchema: z.array(
       z.object({
         mailId: z.string(),
@@ -86,8 +88,8 @@ const getMail = ai.defineTool(
       })
     ),
   },
-  async () => {
-    const mails = await getMailFromAPI();
+  async ({ token }) => {
+    const mails = await getMailFromAPI(token);
     return mails;
   }
 );
@@ -104,9 +106,13 @@ const getLoginUrl = ai.defineTool(
   }
 );
 
-async function getMailFromAPI() {
+async function getMailFromAPI(token: string) {
   try {
-    const res = await fetch(`${environment.API_URL}/mails`);
+    const res = await fetch(`${environment.API_URL}/mails`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!res.ok) {
       return [
@@ -150,7 +156,7 @@ async function login() {
   }
 }
 
-function generatePrompt(command: Command) {
+function generatePrompt(command: Command, token: string) {
   let prompt = 'Salut, comment ça va ?';
   switch (command) {
     case '1':
@@ -160,7 +166,9 @@ function generatePrompt(command: Command) {
       prompt = `Répond uniquement en markdown.
     Tu es un agent qui résume les emails de l'utilisateur.
     Tu dois répondre en français.
-    Donne mes mails stp. Utilise getMail pour récupérer les mails.`;
+    Résume moi les 10 derniers mails. Utilise getMail pour récupérer les mails.
+    voici le token : ${token}
+    `;
       break;
   }
 
