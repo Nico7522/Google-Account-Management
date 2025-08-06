@@ -1,18 +1,27 @@
 <!-- <div [innerHTML]="parsedMessage()"></div> -->
 
+
+
 <div class="chat-container">
-
-
+    @if (error()) {
+    <div class="error-overlay">
+        <div class="error-content">
+            <span style="color: red;">{{error()}}</span>
+            <button>✕</button>
+        </div>
+    </div>
+    }
     <!-- Zone de messages -->
     <main class="chat-messages" #messagesContainer>
 
         @for (message of chat(); track message.id) {
         <!--     <div [class]="message.role.toLowerCase()">
-            <p class="message-text">{{ message.text }}</p>
-        </div> -->
+                    <p class="message-text">{{ message.text }}</p>
+                </div> -->
         <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>
         }
     </main>
+
     <div class="chat-actions">
         @if (!tokens()) {
         <button class="action-button primary" (click)="handleCommand('1')" title="Se connecter">

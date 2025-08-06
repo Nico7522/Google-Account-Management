@@ -1,4 +1,4 @@
-import { Chat, genkit, Session } from 'genkit/beta';
+import { Chat, genkit, GenkitError, Session } from 'genkit/beta';
 import {
   gemini15Flash,
   gemini20FlashLite,
@@ -40,7 +40,6 @@ export const chatFlow = ai.defineFlow(
     { sendChunk }
   ) => {
     let chat: Chat;
-
     if (clearSession) {
       session = ai.createSession({
         sessionId,
@@ -59,8 +58,9 @@ export const chatFlow = ai.defineFlow(
     } else {
       prompt = userInput;
     }
-
     const { stream } = chat.sendStream({ prompt });
+    throw new Error('Attention');
+
     for await (const chunk of stream) {
       for (const part of chunk.content) {
         if (part.text) {

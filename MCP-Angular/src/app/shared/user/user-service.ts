@@ -1,10 +1,14 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Tokens } from '../interfaces/tokens-interface';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
+  readonly #httpClient = inject(HttpClient);
   #tokens = signal<Tokens | undefined>(this.#getTokenFormLocalStorage());
   tokens = this.#tokens.asReadonly();
 
@@ -26,8 +30,16 @@ export class UserService {
   }
 
   logout() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    this.#tokens.set(undefined);
+    return this.#httpClient
+      .post<{ message: string }>(`${environment.API_URL}/auth/logout`, {
+        token: this.#tokens()?.accessToken,
+      })
+      .pipe(
+        tap(() => {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          this.#tokens.set(undefined);
+        })
+      );
   }
 }

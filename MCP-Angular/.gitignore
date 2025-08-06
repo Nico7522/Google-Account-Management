@@ -43,3 +43,5 @@ Thumbs.db
 
 # Environment files
 environments
+
+.cursor

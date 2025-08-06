@@ -52,6 +52,18 @@ app.get("/api/auth/callback", async (req, res) => {
   }
 });
 
+app.post("/api/auth/logout", async (req, res) => {
+  const { token } = req.body;
+  if (!token) res.status(400).json({ error: "Token is required" });
+
+  try {
+    await oauth2Client.revokeToken(token);
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ error: "Logout failed" });
+  }
+});
+
 const PORT = process.env.PORT || 3200;
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);

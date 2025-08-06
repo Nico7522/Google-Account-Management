@@ -1,12 +1,20 @@
-import { Injectable, linkedSignal, resource, signal } from '@angular/core';
+import {
+  inject,
+  Injectable,
+  linkedSignal,
+  resource,
+  signal,
+} from '@angular/core';
 import { streamFlow } from 'genkit/beta/client';
 import { Chat, Role } from '../shared/interfaces/chat-interface';
 import { marked } from 'marked';
+import { ErrorService } from '../shared/error-service/error-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
+  readonly #errorService = inject(ErrorService);
   userInput = signal<string | undefined>(undefined);
   message = resource({
     params: this.userInput,
@@ -16,19 +24,25 @@ export class ChatService {
       >({
         value: { id: 0, text: '' },
       });
-      this.stream(this.userInput() || '').then(async (res) => {
-        const id = Math.floor(Math.random() * 2000);
 
-        for await (const chunk of res.stream) {
-          data.update((prev) => {
-            if ('value' in prev) {
-              return { value: { id: id, text: prev.value.text + chunk } };
-            } else {
-              return { error: chunk };
-            }
-          });
-        }
-      });
+      this.stream(this.userInput() || '')
+        .then(async (res) => {
+          const id = Math.floor(Math.random() * 2000);
+
+          for await (const chunk of res.stream) {
+            data.update((prev) => {
+              if ('value' in prev) {
+                return { value: { id: id, text: prev.value.text + chunk } };
+              } else {
+                return { error: chunk };
+              }
+            });
+          }
+        })
+        .catch(() => {
+          this.#errorService.setError('Une erreur est survenue');
+        });
+
       return data;
     },
   });
@@ -98,7 +112,7 @@ export class ChatService {
     };
   }
   async stream(userInput: string) {
-    return streamFlow({
+    const res = streamFlow({
       url: this.#getChatFlowUrl(),
       input: {
         userInput,
@@ -106,5 +120,7 @@ export class ChatService {
         clearSession: this.clearSession(),
       },
     });
+
+    return res;
   }
 }

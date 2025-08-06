@@ -1,31 +1,31 @@
 import {
-  afterEveryRender,
   Component,
   computed,
+  effect,
   inject,
-  signal,
+  linkedSignal,
 } from '@angular/core';
-import { marked } from 'marked';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ChatService } from './chat-service';
 import { UserService } from '../shared/user/user-service';
-import { afterNextRender, AfterRenderRef } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Command } from '../shared/interfaces/command';
+import { catchError, EMPTY, take } from 'rxjs';
+import { ErrorService } from '../shared/error-service/error-service';
 
 @Component({
   selector: 'app-chat',
-  imports: [DatePipe, FormsModule],
+  imports: [FormsModule],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
 export class Chat {
-  readonly #sanatizer = inject(DomSanitizer);
+  readonly #errorService = inject(ErrorService);
   readonly #chatService = inject(ChatService);
   readonly #userService = inject(UserService);
+  error = this.#errorService.error;
   tokens = this.#userService.tokens;
-  message = this.#chatService.message;
   chat = this.#chatService.chat;
   userInput = '';
 
@@ -39,7 +39,20 @@ export class Chat {
   }
 
   logout() {
-    this.#userService.logout();
+    this.#userService
+      .logout()
+      .pipe(
+        take(1),
+        catchError(() => {
+          this.#errorService.setError('Erreur lors de la déconnexion');
+          return EMPTY;
+        })
+      )
+      .subscribe();
   }
-  constructor() {}
+  constructor() {
+    effect(() => {
+      console.log(this.#chatService.message.error());
+    });
+  }
 }
