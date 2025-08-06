@@ -1,18 +1,11 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  linkedSignal,
-} from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, inject } from '@angular/core';
 import { ChatService } from './chat-service';
 import { UserService } from '../shared/user/user-service';
 
 import { FormsModule } from '@angular/forms';
 import { Command } from '../shared/interfaces/command';
 import { catchError, EMPTY, take } from 'rxjs';
-import { ErrorService } from '../shared/error-service/error-service';
+import { ErrorService } from '../shared/error/error-service/error-service';
 
 @Component({
   selector: 'app-chat',
@@ -44,15 +37,10 @@ export class Chat {
       .pipe(
         take(1),
         catchError(() => {
-          this.#errorService.setError('Erreur lors de la déconnexion');
+          this.#errorService.showError('Erreur lors de la déconnexion');
           return EMPTY;
         })
       )
       .subscribe();
-  }
-  constructor() {
-    effect(() => {
-      console.log(this.#chatService.message.error());
-    });
   }
 }

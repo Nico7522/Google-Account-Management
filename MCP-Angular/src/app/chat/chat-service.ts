@@ -8,7 +8,7 @@ import {
 import { streamFlow } from 'genkit/beta/client';
 import { Chat, Role } from '../shared/interfaces/chat-interface';
 import { marked } from 'marked';
-import { ErrorService } from '../shared/error-service/error-service';
+import { ErrorService } from '../shared/error/error-service/error-service';
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +40,7 @@ export class ChatService {
           }
         })
         .catch(() => {
-          this.#errorService.setError('Une erreur est survenue');
+          this.#errorService.showError('Une erreur est survenue');
         });
 
       return data;

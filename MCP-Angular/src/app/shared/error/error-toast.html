@@ -1,0 +1,6 @@
+<!-- Exemple : toast conditionnel -->
+@if (errorMessage()) {
+<div class="toast toast-error" [class.show]="isToastVisible()">
+    {{ errorMessage() }}
+</div>
+}
