@@ -1,0 +1,35 @@
+<div class="chat-container">
+    <!-- Zone de messages -->
+    <main class="chat-messages" #messagesContainer>
+        @if (isLoading()) {
+        <p>Chargement </p>
+        }
+        @for (message of messages(); track $index) {
+        <!-- <div [class]="message.role.toLowerCase()">
+                    <p class="message-text">{{ message.text }}</p>
+                </div> 
+        <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>  -->
+        <p>{{message}}</p>
+        }
+    </main>
+
+    <div class="chat-actions">
+        <button (click)="handleCommand('1')" class="action-button primary" title="Se connecter">
+            Je veux me connecter à mon compte Gmail
+        </button>
+
+        <button class="action-button primary" title="Se connecter">
+            Me déconnecter
+        </button>
+        <button class="action-button secondary" title="Voir les mails">
+            Je veux voir mes mails
+        </button>
+    </div>
+    <!-- Zone d'entrée -->
+    <footer class="chat-input-container">
+        <input [(ngModel)]="userInput" type="text" class="chat-input" placeholder="Écrivez un message..." />
+        <button (click)="onSubmit()" class="send-button">
+            Envoyer
+        </button>
+    </footer>
+</div>

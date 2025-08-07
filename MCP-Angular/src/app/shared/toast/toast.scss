@@ -1,0 +1,37 @@
+@use 'theme';
+.toast {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.75rem 1rem;
+  max-width: 300px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background-color: #d32f2f; // rouge d’erreur (Material red-700)
+  border-radius: 6px; // "carré", tu peux mettre 4px ou 2px si tu veux plus dur
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-10px) translateX(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+
+  &.toast-error {
+    background-color: theme.$color-error; // utilise ta couleur d'erreur si définie
+  }
+
+  // Apparition
+  &.show {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.toast-info {
+  background-color: #1976d2;
+}
+.toast-success {
+  background-color: #388e3c;
+}

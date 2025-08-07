@@ -1,0 +1,12 @@
+<!-- Exemple : toast conditionnel -->
+@if (toast()?.type === "error") {
+<div class="toast toast-error" [class.show]="isToastVisible()">
+    {{ toast()?.message }}
+</div>
+}
+
+@if (toast()?.type === "success") {
+<div class="toast toast-success" [class.show]="isToastVisible()">
+    {{ toast()?.message }}
+</div>
+}
