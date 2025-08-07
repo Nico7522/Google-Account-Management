@@ -1,16 +1,16 @@
 import { Chat, genkit, GenkitError, Session } from 'genkit/beta';
 import {
   gemini15Flash,
+  gemini15Flash8b,
   gemini20FlashLite,
   gemini25FlashLite,
   googleAI,
 } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import { environment } from './environments/environment';
+import { Command } from './app/shared/interfaces/command';
 
-type Command = '1' | '2';
-
-const model = gemini25FlashLite;
+const model = gemini20FlashLite;
 
 const ai = genkit({
   plugins: [googleAI({ apiKey: environment.API_KEY })],
@@ -61,11 +61,12 @@ export const chatFlow = ai.defineFlow(
     } else {
       prompt = userInput;
     }
-    const { stream } = chat.sendStream({ prompt });
+    const { stream } = chat.sendStream(prompt);
 
     for await (const chunk of stream) {
       for (const part of chunk.content) {
         if (part.text) {
+          console.log(JSON.stringify(part.text));
           sendChunk(part.text);
         }
       }
@@ -114,24 +115,15 @@ async function getMailFromAPI(token: string) {
       },
     });
 
-    if (!res.ok) {
-      return [
-        {
-          mailId: 'error',
-          subject: 'Erreur lors de la récupération des mails',
-          body: `Impossible de récupérer les mails (code: ${res.status})`,
-        },
-      ];
-    }
     const response: { mailId: string; subject: string; body: string }[] =
       await res.json();
     return response;
   } catch (err) {
     return [
       {
-        mailId: 'error',
+        mailId: '',
         subject: 'Erreur lors de la récupération des mails',
-        body: `Exception: ${err}`,
+        body: '',
       },
     ];
   }
@@ -140,19 +132,11 @@ async function getMailFromAPI(token: string) {
 async function login() {
   try {
     const res = await fetch(`${environment.API_URL}/auth/login`);
-    if (!res.ok) {
-      console.log(res);
 
-      throw new Error(`Erreur lors de la connexion: ${res.status}`);
-    }
     const { url } = await res.json();
     return url as string;
   } catch (error) {
-    throw new Error(
-      `Erreur lors de la connexion: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
-    );
+    return "Impossible de récupérer l'url de connexion";
   }
 }
 
@@ -160,12 +144,16 @@ function generatePrompt(command: Command, token: string) {
   let prompt = 'Salut, comment ça va ?';
   switch (command) {
     case '1':
-      prompt = "Utilise getLoginUrl pour récupérer l'url de connexion.";
+      prompt =
+        "Utilise getLoginUrl pour récupérer l'url de connexion. Si tu ne parviens pas à récupérer l'url, répond 'Impossible de récupérer l'url'.";
       break;
     case '2':
       prompt = `Répond uniquement en markdown.
     Tu es un agent qui résume les emails de l'utilisateur.
     Tu dois répondre en français.
+
+    Si tu ne parviens pas à récupérer les mails, répond "Impossible de récupérer les mails".
+
     Résume moi les 10 derniers mails. Utilise getMail pour récupérer les mails.
     voici le token : ${token}
     `;

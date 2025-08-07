@@ -1,0 +1,78 @@
+@use "theme";
+@use "sass:color";
+
+.auth-callback-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: theme.$color-dark;
+  color: theme.$color-light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 1rem;
+  text-align: center;
+  animation: fadeIn 0.6s ease-in-out;
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: color.adjust(theme.$color-light, $lightness: +5%);
+  }
+
+  p {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+}
+
+// === Boutons réutilisables (style cohérent avec ton chat) ===
+.callback-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+  min-width: 200px;
+
+  &.primary {
+    background-color: theme.$color-primary-light;
+    color: theme.$color-dark;
+    box-shadow: 0 4px 12px rgba(theme.$color-primary-light, 0.3);
+
+    &:hover {
+      background-color: theme.$color-primary;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(theme.$color-primary, 0.4);
+    }
+  }
+
+  &.secondary {
+    background-color: transparent;
+    color: theme.$color-light;
+    border: 2px solid theme.$color-primary-light;
+
+    &:hover {
+      background-color: rgba(theme.$color-primary-light, 0.1);
+      border-color: theme.$color-primary;
+    }
+  }
+}
+
+// === Animations légères ===
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

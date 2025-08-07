@@ -1,8 +1,15 @@
-@if(!tokens.error()){
-<p>Authentification réussie</p>
-<a [routerLink]="['/chat']">Accéder au chat</a>
-}
-@else {
-<p>{{tokens.error()}}</p>
-<a [routerLink]="['/']">Retour à la page d'accueil</a>
-}
+<div class="auth-callback-container">
+    @if (!tokens.error()) {
+    <div class="auth-success">
+        <h2>Authentification réussie</h2>
+        <p>Bienvenue ! Vous êtes maintenant connecté.</p>
+        <a [routerLink]="['/chat']" class="callback-button primary">Accéder au chat</a>
+    </div>
+    } @else {
+    <div class="auth-error">
+        <h2>Échec de l'authentification</h2>
+        <p>L'authentification a échoué, veuillez réessayer plus tard.</p>
+        <a [routerLink]="['/']" class="callback-button secondary">Retour à la page d'accueil</a>
+    </div>
+    }
+</div>

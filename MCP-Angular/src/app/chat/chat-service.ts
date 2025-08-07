@@ -41,8 +41,10 @@ export class ChatService {
             });
           }
         })
-        .catch(() => {
-          this.#errorService.showError('Une erreur est survenue');
+        .catch((err) => {
+          if (!(err.message as string).includes('unkown chunk format: {}')) {
+            this.#errorService.showError('Une erreur est survenue');
+          }
         });
 
       return data;

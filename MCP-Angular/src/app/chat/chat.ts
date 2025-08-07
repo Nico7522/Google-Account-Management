@@ -32,15 +32,6 @@ export class Chat {
   }
 
   logout() {
-    this.#userService
-      .logout()
-      .pipe(
-        take(1),
-        catchError(() => {
-          this.#errorService.showError('Erreur lors de la déconnexion');
-          return EMPTY;
-        })
-      )
-      .subscribe();
+    this.#userService.logout().pipe(take(1)).subscribe();
   }
 }
