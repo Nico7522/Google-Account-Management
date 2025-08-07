@@ -18,9 +18,9 @@ export class App {
       const data = signal<{ value: string } | { error: Error }>({
         value: '',
       });
-      this.stream().then(async (res) => {
+      this.stream().then(async res => {
         for await (const chunk of res.stream) {
-          data.update((prev) => {
+          data.update(prev => {
             if ('value' in prev) {
               return { value: prev.value + chunk };
             } else {
@@ -32,7 +32,6 @@ export class App {
       return data;
     },
   });
-
   async stream() {
     return streamFlow({
       url: this.getChatFlowUrl(),

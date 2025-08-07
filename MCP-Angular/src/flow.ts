@@ -1,11 +1,5 @@
 import { Chat, genkit, Session } from 'genkit/beta';
-import {
-  gemini15Flash,
-  gemini15Pro,
-  gemini20Flash,
-  gemini20FlashLite,
-  googleAI,
-} from '@genkit-ai/googleai';
+import { gemini15Flash, gemini15Pro, gemini20Flash, gemini20FlashLite, googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 const model = gemini15Flash;
 
@@ -75,7 +69,7 @@ const getMail = ai.defineTool(
     description: 'Get the mail of the user',
     outputSchema: z.string(),
   },
-  async (input) => {
+  async input => {
     return 'sujet : "payement imoortant refusé, body: "un payement a été refusé, contacter le client au plus vite au numéro 06 06 06 06 06 pour en savoir plus."';
   }
 );
