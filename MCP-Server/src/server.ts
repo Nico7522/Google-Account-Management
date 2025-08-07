@@ -24,8 +24,9 @@ server.tool(
   },
   async () => {
     try {
-      await startHttpServer();
+      // await startHttpServer();
       const { url } = await getAuthUrl();
+
       return {
         content: [
           {
@@ -243,7 +244,7 @@ let httpServer: http.Server;
 async function startHttpServer() {
   httpServer = http.createServer(async (req, res) => {
     if (req.url!.includes("/oauth2callback")) {
-      const callbackUrl = new URL(req.url!, `http://localhost:3000`);
+      const callbackUrl = new URL(req.url!, `http://localhost:3200`);
       const code = callbackUrl.searchParams.get("code");
       try {
         const { tokens } = await oauth2Client.getToken(code ?? "");
@@ -265,7 +266,7 @@ async function startHttpServer() {
     }
   });
 
-  httpServer.listen(3000);
+  httpServer.listen(3200);
 }
 
 /**

@@ -83,7 +83,7 @@ class McpClient {
 
     // Premier appel avec tools
     const completion = await this.llm.chat.completions.create({
-      model: "qwen/qwen3-coder:free",
+      model: "deepseek/deepseek-chat-v3-0324:free",
       messages,
       tools: this.tools.map((tool) => ({
         type: "function",
@@ -127,7 +127,7 @@ class McpClient {
 
         // Relance le modèle avec la réponse du tool
         const finalResponse = await this.llm.chat.completions.create({
-          model: "qwen/qwen3-coder:free",
+          model: "deepseek/deepseek-chat-v3-0324:free",
           messages,
         });
         // for await (const chunk of finalResponse) {
@@ -221,6 +221,7 @@ async function main() {
         }
 
         const response = await mcpClient.processQuery(query);
+
         res.status(200).json({ response });
         // res.setHeader("Content-Type", "text/plain; charset=utf-8");
         // res.setHeader("Transfer-Encoding", "chunked");
