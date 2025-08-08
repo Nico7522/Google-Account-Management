@@ -65,8 +65,7 @@ export const chatFlow = ai.defineFlow(
 
     for await (const chunk of stream) {
       for (const part of chunk.content) {
-        if (part.text) {
-          console.log(JSON.stringify(part.text));
+        if (part.text && part.text.trim() !== '') {
           sendChunk(part.text);
         }
       }
