@@ -5,11 +5,8 @@
         <p>Chargement </p>
         }
         @for (message of messages(); track $index) {
-        <!-- <div [class]="message.role.toLowerCase()">
-                    <p class="message-text">{{ message.text }}</p>
-                </div> 
-        <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>  -->
-        <p>{{message}}</p>
+        <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>
+
         }
     </main>
 

@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, linkedSignal, resource, signal } from '@angular/core';
 import { catchError, EMPTY, lastValueFrom } from 'rxjs';
 import { ToastService } from '../shared/toast/toast-service';
-
+import { marked } from 'marked';
+import { Message } from '../shared/models/message-interface';
 @Injectable({
   providedIn: 'root',
 })
@@ -28,13 +29,14 @@ export class ChatService {
    * LinkedSignal containing the messages
    * Triggered by the response signal.
    */
-  messages = linkedSignal<string | undefined, string[]>({
+  messages = linkedSignal<string | undefined, Message[]>({
     source: () => this.response.value()?.response,
-    computation: (source, previous): string[] => {
-      if (previous) {
-        return [...(previous.value || []), source || ''];
+    computation: (source, previous): Message[] => {
+      if (!source || source.trim() === '') {
+        return previous?.value || [];
       }
-      return [source || ''];
+
+      return previous ? [...previous.value, { role: 'AGENT', text: marked.parse(source).toString() }] : [];
     },
   });
 
@@ -43,7 +45,7 @@ export class ChatService {
    * @param userMessage The message to add to the linkedSignal.
    */
   addUserMessage(userMessage: string) {
-    this.messages.update(messages => [...messages, userMessage]);
+    this.messages.update(messages => [...messages, { role: 'USER', text: marked.parse(userMessage).toString() }]);
   }
 
   /**
