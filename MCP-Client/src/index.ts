@@ -1,214 +1,12 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { OpenAI } from "openai";
 import dotenv from "dotenv";
-import readline from "readline/promises";
-import { Tool } from "@modelcontextprotocol/sdk/types";
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import {
-  GoogleGenAI,
-  FunctionCallingConfigMode,
-  mcpToTool,
-} from "@google/genai";
+
 import { Request, Response } from "express";
 import express from "express";
 import cors from "cors";
+import { processQuery } from "./openAI/open-ai";
+import { McpClient } from "./config/client";
 import { callGemini } from "./googleAI/gemini";
 dotenv.config();
-
-const model = "qwen/qwen3-235b-a22b:free";
-const API_KEY = process.env.API_KEY;
-if (!API_KEY) {
-  throw new Error("API KEY is not set");
-}
-
-class McpClient {
-  mcp: Client;
-  private llm: OpenAI;
-  private googleAi: GoogleGenAI | null = null;
-  private transport: StdioClientTransport | null = null;
-  #tools: Tool[] = [];
-  private model = "gemini-2.0-flash-exp";
-
-  constructor() {
-    this.llm = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: API_KEY,
-    });
-
-    this.mcp = new Client({
-      name: "mcp-client",
-      version: "1.0.0",
-    });
-
-    this.googleAi = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_API_KEY,
-    });
-  }
-
-  /**
-   * Connect to MCP server
-   * @param serverScriptPath - The path to the MCP server
-   */
-  async connect(serverScriptPath: string) {
-    this.transport = new StdioClientTransport({
-      command: "node",
-      args: [serverScriptPath],
-    });
-    await this.mcp.connect(this.transport);
-    await this.#registerTools();
-
-    console.log(
-      "Connected to MCP server",
-      this.#tools.map(({ name }) => name)
-    );
-  }
-
-  /**
-   * Assign available tools to tools array
-   */
-  async #registerTools() {
-    const toolsResult = await this.mcp.listTools();
-
-    this.#tools = toolsResult.tools.map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-    }));
-  }
-
-  get tools() {
-    return this.#tools;
-  }
-
-  /**
-   * Process query
-   * @param query - The query to process
-   * @returns The response from the LLM
-   */
-  async processQuery(query: string) {
-    const messages: ChatCompletionMessageParam[] = [
-      {
-        role: "user",
-        content: query,
-      },
-    ];
-
-    // Premier appel avec tools
-    const completion = await this.llm.chat.completions.create({
-      model,
-      messages,
-      tools: this.tools.map((tool) => ({
-        type: "function",
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.inputSchema,
-        },
-      })),
-    });
-
-    const msg = completion.choices[0].message;
-    const finalText: string[] = [];
-
-    if (msg.content) {
-      finalText.push(msg.content);
-      //yield msg.content;
-    }
-
-    if (msg.tool_calls && msg.tool_calls.length > 0) {
-      for (const toolCall of msg.tool_calls) {
-        const toolName = toolCall.function.name;
-        const toolArgs = JSON.parse(toolCall.function.arguments || "{}");
-
-        // finalText.push(
-        //   `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
-        // );
-
-        // Appel à ton serveur MCP (ou fonction locale)
-        const result = await this.mcp.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        });
-
-        // Ajoute la réponse du tool dans le chat
-        messages.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: result.content as string, // Already string,
-        });
-
-        // Relance le modèle avec la réponse du tool
-        const finalResponse = await this.llm.chat.completions.create({
-          model,
-          messages,
-        });
-        // for await (const chunk of finalResponse) {
-        //   if (chunk.choices[0].delta.content) {
-        //     console.log("Streaming chunk:", chunk.choices[0].delta.content);
-
-        //     yield chunk.choices[0].delta.content;
-        //   }
-        // }
-        const finalMsg = finalResponse.choices[0].message;
-        if (finalMsg.content) {
-          finalText.push(finalMsg.content);
-        }
-      }
-    }
-    console.log(finalText);
-
-    return finalText.join("\n");
-  }
-
-  async callGemini(prompt: string) {
-    const response = await this.googleAi?.models.generateContent({
-      model: this.model,
-      contents: prompt,
-      config: {
-        tools: [mcpToTool(this.mcp)],
-      },
-    });
-
-    return response?.text;
-  }
-
-  /**
-   * Start the chat
-   */
-  async chatLoop() {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    try {
-      console.log("MCP Client started");
-      console.log("Type your queries or 'quit' to exit.");
-
-      while (true) {
-        const message = await rl.question("Enter your query: ");
-        if (message.toLowerCase() === "quit") {
-          break;
-        }
-
-        const response = await this.processQuery(message);
-        console.log("\n", response);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      rl.close();
-    }
-  }
-
-  /**
-   * Close the MCP client
-   */
-  async cleanup() {
-    await this.mcp.close();
-  }
-}
 
 /**
  * Main function, run the MCP client
@@ -218,14 +16,11 @@ async function main() {
     console.error("Usage: node index.js <server-script-path>");
     return;
   }
-
   const app = express();
   const port = process.env.PORT || 3000;
-
   app.use(cors());
   app.use(express.json());
   const mcpClient = new McpClient();
-
   try {
     await mcpClient.connect(process.argv[2]);
 
@@ -247,6 +42,11 @@ async function main() {
         }
 
         const response = await callGemini(query, mcpClient.mcp);
+        // const response = await processQuery(
+        //   query,
+        //   mcpClient.tools,
+        //   mcpClient.mcp
+        // );
 
         res.status(200).json({ response });
         // res.setHeader("Content-Type", "text/plain; charset=utf-8");
