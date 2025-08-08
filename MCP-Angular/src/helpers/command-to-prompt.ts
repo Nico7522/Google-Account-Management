@@ -8,7 +8,7 @@ import { Command } from '../app/shared/models/command-type';
 export function commandToPrompt(command: Command): string {
   switch (command) {
     case '1':
-      return "Donne moi l'URL d'authentification pour accéder à mon compte Google.";
+      return "Donne moi l'URL d'authentification pour accéder à mon compte Google. NE ME DONNE QUE LE LIEN RIEN D'AUTRE.";
     case '2':
       return 'Donne moi les 10 mails les plus récents.';
     default:

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, linkedSignal, resource, signal } from '@angular/core';
-import { catchError, EMPTY, lastValueFrom } from 'rxjs';
+import { catchError, lastValueFrom, of } from 'rxjs';
 import { ToastService } from '../shared/toast/toast-service';
 import { marked } from 'marked';
 import { Message } from '../shared/models/message-interface';
@@ -66,7 +66,7 @@ export class ChatService {
       this.#httpClient.post<{ response: string }>('/api/chat', { query: prompt }).pipe(
         catchError(() => {
           this.#toastService.showToast('error', 'Une erreur est survenue.');
-          return EMPTY;
+          return of({ response: '' });
         })
       )
     );

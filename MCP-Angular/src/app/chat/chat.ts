@@ -14,6 +14,7 @@ export class Chat {
   readonly #chatService = inject(ChatService);
   isLoading = this.#chatService.response.isLoading;
   messages = this.#chatService.messages;
+  error = this.#chatService.response.error;
   userInput = '';
   handleCommand(command: Command) {
     const prompt = commandToPrompt(command);

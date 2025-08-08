@@ -9,4 +9,8 @@ export const routes: Routes = [
     path: 'chat',
     loadComponent: () => import('./chat/chat').then(m => m.Chat),
   },
+  {
+    path: 'callback',
+    loadComponent: () => import('./callback/callback').then(m => m.Callback),
+  },
 ];

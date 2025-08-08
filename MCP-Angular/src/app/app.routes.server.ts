@@ -13,4 +13,8 @@ export const serverRoutes: ServerRoute[] = [
     path: 'chat',
     renderMode: RenderMode.Server,
   },
+  {
+    path: 'callback',
+    renderMode: RenderMode.Client,
+  },
 ];
