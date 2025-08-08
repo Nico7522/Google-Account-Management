@@ -18,6 +18,7 @@ export class Chat {
   userInput = '';
   handleCommand(command: Command) {
     const prompt = commandToPrompt(command);
+    this.#chatService.addUserMessage(prompt);
     this.#chatService.setPrompt(prompt);
   }
 

@@ -3,15 +3,22 @@
 
     <!-- Zone de messages -->
     <main class="chat-messages" #messagesContainer>
-        @if (isLoading()) {
-        <p>Chargement </p>
-        }
         @for (message of messages(); track $index) {
         <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>
 
         }
     </main>
+    @if (isLoading()) {
+    <div class="chat-status">
+        <div class="loading-dots" aria-label="Chargement">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
 
+        </div>
+    </div>
+    }
     <div class="chat-actions">
         <button (click)="handleCommand('1')" class="action-button primary" title="Se connecter">
             Je veux me connecter à mon compte Gmail
@@ -24,6 +31,7 @@
             Je veux voir mes mails
         </button>
     </div>
+
     <!-- Zone d'entrée -->
     <footer class="chat-input-container">
         <input [(ngModel)]="userInput" type="text" class="chat-input" placeholder="Écrivez un message..." />
