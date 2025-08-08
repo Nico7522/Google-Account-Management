@@ -5,21 +5,30 @@ import dotenv from "dotenv";
 import readline from "readline/promises";
 import { Tool } from "@modelcontextprotocol/sdk/types";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import {
+  GoogleGenAI,
+  FunctionCallingConfigMode,
+  mcpToTool,
+} from "@google/genai";
 import { Request, Response } from "express";
 import express from "express";
 import cors from "cors";
+import { callGemini } from "./googleAI/gemini";
 dotenv.config();
 
+const model = "qwen/qwen3-235b-a22b:free";
 const API_KEY = process.env.API_KEY;
 if (!API_KEY) {
   throw new Error("API KEY is not set");
 }
 
 class McpClient {
-  private mcp: Client;
+  mcp: Client;
   private llm: OpenAI;
+  private googleAi: GoogleGenAI | null = null;
   private transport: StdioClientTransport | null = null;
   #tools: Tool[] = [];
+  private model = "gemini-2.0-flash-exp";
 
   constructor() {
     this.llm = new OpenAI({
@@ -30,6 +39,10 @@ class McpClient {
     this.mcp = new Client({
       name: "mcp-client",
       version: "1.0.0",
+    });
+
+    this.googleAi = new GoogleGenAI({
+      apiKey: process.env.GOOGLE_API_KEY,
     });
   }
 
@@ -83,7 +96,7 @@ class McpClient {
 
     // Premier appel avec tools
     const completion = await this.llm.chat.completions.create({
-      model: "deepseek/deepseek-chat-v3-0324:free",
+      model,
       messages,
       tools: this.tools.map((tool) => ({
         type: "function",
@@ -127,7 +140,7 @@ class McpClient {
 
         // Relance le modèle avec la réponse du tool
         const finalResponse = await this.llm.chat.completions.create({
-          model: "deepseek/deepseek-chat-v3-0324:free",
+          model,
           messages,
         });
         // for await (const chunk of finalResponse) {
@@ -146,6 +159,18 @@ class McpClient {
     console.log(finalText);
 
     return finalText.join("\n");
+  }
+
+  async callGemini(prompt: string) {
+    const response = await this.googleAi?.models.generateContent({
+      model: this.model,
+      contents: prompt,
+      config: {
+        tools: [mcpToTool(this.mcp)],
+      },
+    });
+
+    return response?.text;
   }
 
   /**
@@ -221,7 +246,7 @@ async function main() {
           return res.status(400).json({ error: "Query is required" });
         }
 
-        const response = await mcpClient.processQuery(query);
+        const response = await callGemini(query, mcpClient.mcp);
 
         res.status(200).json({ response });
         // res.setHeader("Content-Type", "text/plain; charset=utf-8");
