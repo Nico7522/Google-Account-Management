@@ -108,9 +108,9 @@ class McpClient {
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments || "{}");
 
-        finalText.push(
-          `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
-        );
+        // finalText.push(
+        //   `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
+        // );
 
         // Appel à ton serveur MCP (ou fonction locale)
         const result = await this.mcp.callTool({
@@ -143,6 +143,7 @@ class McpClient {
         }
       }
     }
+    console.log(finalText);
 
     return finalText.join("\n");
   }
