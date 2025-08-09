@@ -81,6 +81,36 @@ server.tool(
   }
 );
 
+server.tool(
+  "logout",
+  "logout the user by revoking the tokens",
+  {
+    token: z.string(),
+  },
+  async ({ token }) => {
+    try {
+      await logout(token);
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Succefully disconnected",
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error",
+          },
+        ],
+      };
+    }
+  }
+);
+
 server.tool("getMyCalendar", async () => {
   const isAuthenticated = await setAccessToken();
   if (!isAuthenticated) {
@@ -148,6 +178,15 @@ async function getTokens(code: string) {
     accesToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
   };
+}
+
+async function logout(token: string) {
+  try {
+    await oauth2Client.revokeToken(token);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
