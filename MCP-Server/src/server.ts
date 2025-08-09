@@ -10,6 +10,7 @@ import { oauth2Client, SCOPES } from "../config/google-config";
 import http from "node:http";
 import { google } from "googleapis";
 import { cleanEmailContent } from "./helpers/html-helper";
+import z from "zod";
 const server = new McpServer({
   name: "mcp-test",
   version: "1.0.0",
@@ -43,6 +44,36 @@ server.tool(
             text: `💥 Exception inattendue: ${
               err instanceof Error ? err.message : String(err)
             }`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "getTokens",
+  "Get tokens for acces to mails and calendar",
+  {
+    code: z.string(),
+  },
+  async ({ code }) => {
+    try {
+      const tokens = await getTokens(code);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(tokens),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "invalid request",
           },
         ],
       };
@@ -108,6 +139,14 @@ async function getAuthUrl() {
   });
   return {
     url: authUrl,
+  };
+}
+
+async function getTokens(code: string) {
+  const { tokens } = await oauth2Client.getToken(code);
+  return {
+    accesToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
   };
 }
 
