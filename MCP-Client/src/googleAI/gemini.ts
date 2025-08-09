@@ -6,7 +6,7 @@ dotenv.config();
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_API_KEY,
 });
-const model = "gemini-2.0-flash-exp";
+const model = "gemini-2.5-flash-lite";
 
 export async function callGemini(prompt: string, client: Client) {
   const response = await ai.models.generateContent({

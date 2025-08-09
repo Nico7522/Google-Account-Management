@@ -49,6 +49,7 @@ async function main() {
         // );
 
         res.status(200).json({ response });
+
         // res.setHeader("Content-Type", "text/plain; charset=utf-8");
         // res.setHeader("Transfer-Encoding", "chunked");
 
@@ -65,6 +66,29 @@ async function main() {
       }
     };
     app.post("/chat", chatHandler);
+
+    const getTokens = async (req: Request, res: Response) => {
+      try {
+        const { query } = req.body;
+        if (!query) {
+          return res.status(400).json({ error: "Query is required" });
+        }
+
+        const response = await callGemini(query, mcpClient.mcp);
+        const tokens = JSON.parse(response || "");
+        res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
+        res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
+
+        return res
+          .status(200)
+          .json({ response: "Authentification succefulled." });
+      } catch (error) {
+        console.error("Error processing query:", error);
+        res.status(500).json({ error: "Failed to process query" });
+      }
+    };
+
+    app.post("/tokens", getTokens);
 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
