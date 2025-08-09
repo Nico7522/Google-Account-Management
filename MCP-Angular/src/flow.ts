@@ -17,7 +17,7 @@ const ai = genkit({
     openAICompatible({
       name: 'qwen',
       apiKey:
-        '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', 
+        '', 
       baseURL: 'https://openrouter.ai/api/v1', 
       initializer: async (ai, client) => {
         defineCompatOpenAIModel({
