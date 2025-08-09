@@ -1,4 +1,5 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, inject, input, OnInit } from '@angular/core';
+import { CallbackService } from './callback-service';
 
 @Component({
   selector: 'app-callback',
@@ -6,12 +7,11 @@ import { Component, effect, input } from '@angular/core';
   templateUrl: './callback.html',
   styleUrl: './callback.scss',
 })
-export class Callback {
-  authCode = input.required<string>();
+export class Callback implements OnInit {
+  readonly #callBackService = inject(CallbackService)
+  code = input.required<string>();
 
-  constructor() {
-    effect(() => {
-      console.log(this.authCode());
-    });
+  ngOnInit(): void {
+    this.#callBackService.setCode(this.code())
   }
 }

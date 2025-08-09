@@ -10,7 +10,7 @@ export const routes: Routes = [
     loadComponent: () => import('./chat/chat').then(m => m.Chat),
   },
   {
-    path: 'callback',
+    path: 'auth/callback',
     loadComponent: () => import('./callback/callback').then(m => m.Callback),
   },
 ];
