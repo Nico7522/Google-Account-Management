@@ -1,20 +1,34 @@
-import { Chat, genkit, GenkitError, Session } from 'genkit/beta';
-import {
-  gemini15Flash,
-  gemini15Flash8b,
-  gemini20FlashLite,
-  gemini25FlashLite,
-  googleAI,
-} from '@genkit-ai/googleai';
+import { Chat, genkit, Session } from 'genkit/beta';
+import { gemini20FlashLite, googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import { environment } from './environments/environment';
 import { Command } from './app/shared/interfaces/command';
+import {
+  openAICompatible,
+  compatOaiModelRef,
+  defineCompatOpenAIModel,
 
-const model = gemini20FlashLite;
-
+} from '@genkit-ai/compat-oai';
+export const modelRef = compatOaiModelRef({
+  name: 'qwen/qwen3-coder:free', // Should match `<pluginName>/<model-identifier>`
+});
 const ai = genkit({
-  plugins: [googleAI({ apiKey: environment.API_KEY })],
-  model,
+  plugins: [
+    openAICompatible({
+      name: 'qwen',
+      apiKey:
+        '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', 
+      baseURL: 'https://openrouter.ai/api/v1', 
+      initializer: async (ai, client) => {
+        defineCompatOpenAIModel({
+          ai,
+          name: modelRef.name,
+          client,
+          modelRef,
+        })
+      }
+    }),
+  ],
 });
 let session: Session;
 
@@ -40,7 +54,7 @@ export const chatFlow = ai.defineFlow(
       sessionId: string;
       clearSession: boolean;
     },
-    { sendChunk }
+    { sendChunk },
   ) => {
     let chat: Chat;
     if (clearSession) {
@@ -52,7 +66,7 @@ export const chatFlow = ai.defineFlow(
 
     chat = session.chat({
       sessionId: sessionId,
-      model: model,
+      model: modelRef,
       tools: [getMail, getLoginUrl],
     });
     let prompt = '';
@@ -70,7 +84,7 @@ export const chatFlow = ai.defineFlow(
         }
       }
     }
-  }
+  },
 );
 
 const getMail = ai.defineTool(
@@ -85,13 +99,13 @@ const getMail = ai.defineTool(
         mailId: z.string(),
         subject: z.string(),
         body: z.string(),
-      })
+      }),
     ),
   },
   async ({ token }) => {
     const mails = await getMailFromAPI(token);
     return mails;
-  }
+  },
 );
 
 const getLoginUrl = ai.defineTool(
@@ -103,7 +117,7 @@ const getLoginUrl = ai.defineTool(
   async () => {
     const url = await login();
     return url;
-  }
+  },
 );
 
 async function getMailFromAPI(token: string) {
