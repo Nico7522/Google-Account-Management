@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
-
 import { Request, Response } from "express";
 import express from "express";
 import cors from "cors";
 import { processQuery } from "./openAI/open-ai";
 import { McpClient } from "./config/client";
 import { callGemini } from "./googleAI/gemini";
+const cookieParser = require("cookie-parser");
+
 dotenv.config();
 
 /**
@@ -20,6 +21,7 @@ async function main() {
   const port = process.env.PORT || 3000;
   app.use(cors());
   app.use(express.json());
+  app.use(cookieParser());
   const mcpClient = new McpClient();
   try {
     await mcpClient.connect(process.argv[2]);
@@ -89,6 +91,15 @@ async function main() {
     };
 
     app.post("/tokens", getTokens);
+
+    const logout = async (req: Request, res: Response) => {
+      const token = req.cookies;
+      console.log(token);
+
+      return res.status(200);
+    };
+
+    app.post("/logout", logout);
 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
