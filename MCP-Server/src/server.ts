@@ -11,7 +11,7 @@ import http from "node:http";
 import { google } from "googleapis";
 import { cleanEmailContent } from "./helpers/html-helper";
 import z from "zod";
-import { setFakeDb } from "../db/db";
+import { getFakeDb, removeFakeDb, setFakeDb } from "../db/db";
 const server = new McpServer({
   name: "mcp-test",
   version: "1.0.0",
@@ -74,7 +74,7 @@ server.tool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(error),
+            text: error instanceof Error ? error.message : String(error),
           },
         ],
       };
@@ -86,11 +86,11 @@ server.tool(
   "logout",
   "logout the user by revoking the tokens",
   {
-    token: z.string(),
+    userID: z.string(),
   },
-  async ({ token }) => {
+  async ({ userID }) => {
     try {
-      await logout(token);
+      await logout(userID);
       return {
         content: [
           {
@@ -191,7 +191,7 @@ async function getTokens(code: string): Promise<string> {
     const userInfo = await oauth2.userinfo.get();
     if (!userInfo.data.id) throw new Error("User ID not found");
     setFakeDb(userInfo.data.id, {
-      accesToken: tokens.access_token ?? "",
+      accessToken: tokens.access_token ?? "",
       refreshToken: tokens.refresh_token ?? "",
     });
 
@@ -201,12 +201,13 @@ async function getTokens(code: string): Promise<string> {
   }
 }
 
-async function logout(token: string) {
+async function logout(userID: string) {
   try {
-    await oauth2Client.revokeToken(token);
-    return true;
+    const tokens = getFakeDb()[userID];
+    removeFakeDb(userID);
+    await oauth2Client.revokeToken(tokens.accessToken);
   } catch (error) {
-    return false;
+    throw error;
   }
 }
 

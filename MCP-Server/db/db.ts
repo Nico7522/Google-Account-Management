@@ -58,7 +58,7 @@ export function getFakeDb(): Record<string, any> {
 export function setFakeDb(
   key: string,
   value: {
-    accesToken: string;
+    accessToken: string;
     refreshToken: string;
   }
 ) {
