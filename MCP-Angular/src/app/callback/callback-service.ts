@@ -15,12 +15,13 @@ export class CallbackService {
   #code = signal<string | undefined>(undefined)
 
   // Tokens received from client
-  tokens = resource({
+  #tokens = resource({
     params: this.#code,
     loader: ({params}) => {
       return this.getTokens(environment.ECHANGE_AUTH_CODE_PROMPT + params)
     }
   })
+  tokens = this.#tokens.asReadonly();
   
   /**
    * Method called to echange auth code for tokens

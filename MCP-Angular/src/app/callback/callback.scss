@@ -1,0 +1,131 @@
+@use "theme";
+@use "sass:color";
+
+.auth-callback-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: theme.$color-dark;
+  color: theme.$color-light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 1rem;
+  text-align: center;
+  animation: fadeIn 0.6s ease-in-out;
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: color.adjust(theme.$color-light, $lightness: +5%);
+  }
+
+  p {
+    font-size: 1rem;
+    color: color.adjust(theme.$color-light, $lightness: -20%); // Plus foncé que theme.$color-light
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+}
+
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+// === Icônes d'état ===
+.auth-icon {
+  width: 60px;
+  height: 60px;
+  stroke: theme.$color-primary-light;
+  stroke-width: 2;
+
+  &.success {
+    stroke: theme.$color-primary-light;
+    animation: popIn 0.4s ease forwards;
+  }
+}
+
+.auth-icon.error {
+    stroke: theme.$color-error;
+    animation: popIn 0.4s ease forwards;
+  }
+
+
+
+// === Animation de chargement (spinner) ===
+.spin {
+  animation: spin 1.5s linear infinite;
+  transform-origin: 16px 16px; // Important : pour faire tourner autour du centre
+
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// === Bouton réutilisable ===
+.callback-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+  min-width: 200px;
+
+  &.primary {
+    background-color: theme.$color-primary-light;
+    color: theme.$color-dark;
+    box-shadow: 0 4px 12px rgba(theme.$color-primary-light, 0.3);
+
+    &:hover:not(.disabled) {
+      background-color: theme.$color-primary;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(theme.$color-primary, 0.4);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// === Apparition douce ===
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

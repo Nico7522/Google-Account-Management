@@ -1,1 +1,50 @@
-<p>callback works!</p>
+<div class="auth-callback-container">
+    <!-- Icône de chargement ou succès -->
+    <div class="auth-content">
+        @switch (status()) {
+        @case ('loading') {
+        <svg class="auth-icon" viewBox="0 0 32 32" fill="none">
+            <defs>
+                <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#44c7f4" />
+                    <stop offset="100%" stop-color="#007acc" />
+                </linearGradient>
+            </defs>
+            <circle cx="16" cy="16" r="10" stroke="transparent" stroke-width="2" />
+            <circle cx="16" cy="16" r="10" stroke="url(#primaryGradient)" stroke-width="2" stroke-dasharray="15, 10"
+                stroke-linecap="round" class="spin" />
+        </svg>
+
+        <h2>Connexion en cours…</h2>
+        <p>
+            Vérification de votre identité avec Google…
+        </p>
+        }
+        @case ('error') {
+        <svg class="auth-icon error" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3" stroke-width="2" />
+            <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <h2>Une erreur est survenue</h2>
+        <p>
+            Une erreur est survenue lors de la connexion.
+        </p>
+        }
+        @case ('success') {
+        <svg class="auth-icon success" viewBox="0 0 24 24" fill="none">
+            <path d="M9 16.17 4.83 12 3.41 13.41 9 19 21 7 19.59 5.59z" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h2>Authentification réussie</h2>
+        <p>
+            Vous êtes maintenant connecté avec succès.
+        </p>
+        }
+        }
+
+        <a [routerLink]="['/chat']" [class.disabled]="status() === 'loading'" class="callback-button primary"
+            aria-label="Accéder au chat">
+            Retour au chat
+        </a>
+    </div>
+</div>
