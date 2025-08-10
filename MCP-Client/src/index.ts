@@ -77,7 +77,6 @@ async function main() {
         }
 
         const response = await callGemini(query, mcpClient.mcp);
-        res.cookie("userID", response, { httpOnly: true });
 
         return res.status(200).json({ response });
       } catch (error) {
@@ -89,10 +88,15 @@ async function main() {
     app.post("/tokens", getTokens);
 
     const logout = async (req: Request, res: Response) => {
-      const cookies = req.cookies;
-      console.log(cookies);
+      try {
+        const { query } = req.body;
+        const response = await callGemini(query, mcpClient.mcp);
 
-      return res.status(200);
+        return res.status(200).json({ response });
+      } catch (error) {
+        console.error("Error processing query:", error);
+        res.status(500).json({ error: "Failed to process query" });
+      }
     };
 
     app.post("/logout", logout);

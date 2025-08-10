@@ -17,5 +17,5 @@ export async function callGemini(prompt: string, client: Client) {
     },
   });
 
-  return response?.text;
+  return response?.text?.trim();
 }
