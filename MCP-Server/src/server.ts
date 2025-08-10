@@ -11,6 +11,7 @@ import http from "node:http";
 import { google } from "googleapis";
 import { cleanEmailContent } from "./helpers/html-helper";
 import z from "zod";
+import { setFakeDb } from "../db/db";
 const server = new McpServer({
   name: "mcp-test",
   version: "1.0.0",
@@ -59,12 +60,12 @@ server.tool(
   },
   async ({ code }) => {
     try {
-      const tokens = await getTokens(code);
+      const userId = await getTokens(code);
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(tokens),
+            text: JSON.stringify(userId),
           },
         ],
       };
@@ -73,7 +74,7 @@ server.tool(
         content: [
           {
             type: "text",
-            text: "invalid request",
+            text: JSON.stringify(error),
           },
         ],
       };
@@ -103,7 +104,9 @@ server.tool(
         content: [
           {
             type: "text",
-            text: "Error",
+            text: `💥 Exception inattendue: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           },
         ],
       };
@@ -172,12 +175,30 @@ async function getAuthUrl() {
   };
 }
 
-async function getTokens(code: string) {
-  const { tokens } = await oauth2Client.getToken(code);
-  return {
-    accesToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-  };
+/**
+ * Get the tokens from the code, write them into the fake db and return the user id
+ * @param code The code to exchange for tokens
+ * @returns The user id
+ */
+async function getTokens(code: string): Promise<string> {
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+    const oauth2 = google.oauth2({
+      version: "v2",
+      auth: oauth2Client,
+    });
+    const userInfo = await oauth2.userinfo.get();
+    if (!userInfo.data.id) throw new Error("User ID not found");
+    setFakeDb(userInfo.data.id, {
+      accesToken: tokens.access_token ?? "",
+      refreshToken: tokens.refresh_token ?? "",
+    });
+
+    return userInfo.data.id;
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function logout(token: string) {

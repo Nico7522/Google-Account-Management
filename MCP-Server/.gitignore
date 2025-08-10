@@ -1,4 +1,4 @@
 node_modules
 dist
 .env
-token.json
+db/fake_db.json
