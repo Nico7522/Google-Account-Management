@@ -7,6 +7,6 @@ import { inject, Injectable, signal } from '@angular/core';
 export class AuthService {
   readonly #httpClient = inject(HttpClient);
   logout() {
-    return this.#httpClient.post<unknown>('/api/logout', {}, {withCredentials: true})
+    return this.#httpClient.post<unknown>('/api/logout', {query: "logout"}, {withCredentials: true})
   }
 }

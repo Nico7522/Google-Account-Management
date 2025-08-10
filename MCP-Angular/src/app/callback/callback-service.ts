@@ -30,8 +30,13 @@ export class CallbackService {
   getTokens(prompt: string){
     return lastValueFrom(this.#httpClient.post<{response: string}>('/api/tokens', {query: prompt})
     .pipe(
-      map(res => {
-          console.log(res.response);
+      tap(res => {
+        if (res.response === "error") {
+          this.#toastService.showToast('error', "Une erreur est survenue.")
+        } else {
+          this.#toastService.showToast('success', "Authentification réussie.")
+          localStorage.setItem('userId', res.response.trim())
+        }
       }),
       catchError(err => {
         this.#toastService.showToast('error', "Une erreur est survenue.")
