@@ -95,7 +95,7 @@ async function main() {
         return res.status(200).json({ response });
       } catch (error) {
         console.error("Error processing query:", error);
-        res.status(500).json({ error: "Failed to process query" });
+        res.status(500).json({ error: error });
       }
     };
 

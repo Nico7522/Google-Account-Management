@@ -86,11 +86,11 @@ server.tool(
   "logout",
   "logout the user by revoking the tokens",
   {
-    userID: z.string(),
+    userId: z.string(),
   },
-  async ({ userID }) => {
+  async ({ userId }) => {
     try {
-      await logout(userID);
+      await logout(userId);
       return {
         content: [
           {
@@ -104,9 +104,7 @@ server.tool(
         content: [
           {
             type: "text",
-            text: `💥 Exception inattendue: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
+            text: String(error),
           },
         ],
       };
