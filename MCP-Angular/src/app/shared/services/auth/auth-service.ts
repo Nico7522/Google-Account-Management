@@ -17,7 +17,7 @@ export class AuthService {
       this.#toastService.showToast('error', 'Vous n\'êtes pas connecté');
       return of(undefined);
     }
-    return this.#httpClient.post<unknown>('/api/logout', {query: `Logout userId: ${userId}`})
+    return this.#httpClient.post<unknown>('/api/chat', {query: `Logout userId: ${userId}`})
     .pipe(
       tap(() => {
         this.#storageService.removeUserId(userId);

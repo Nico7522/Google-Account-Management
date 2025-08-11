@@ -32,9 +32,16 @@ export class ChatService {
   messages = linkedSignal<string | undefined, Message[]>({
     source: () => this.response.value()?.response,
     computation: (source, previous): Message[] => {
+
+      if(source?.includes("Déconnecté avec succès")) {
+        console.log(source);
+        localStorage.removeItem('userId');
+      }
+
       if (!source || source.trim() === '') {
         return previous?.value || [];
       }
+
 
       return previous ? [...previous.value, { role: 'AGENT', text: marked.parse(source).toString() }] : [];
     },

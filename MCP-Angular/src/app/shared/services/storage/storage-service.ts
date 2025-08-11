@@ -1,17 +1,27 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { ChatService } from '../../../chat/chat-service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StorageService {
   readonly #platformId = inject(PLATFORM_ID);
+  readonly #chatService = inject(ChatService);
   // Signal to store the user id
   #userId = signal<string | undefined>(this.#getUserId());
   // Readonly signal to get the user id
   userId = this.#userId.asReadonly();
   // Computed signal to know if the user is logged in
-  isLoggedIn = computed(() => this.#userId() !== undefined);
+  isLoggedIn = computed(() => {
+    if(this.userId() === undefined) {
+      return false;
+    }
+    if(this.#chatService.messages().length > 0 && this.#chatService.messages()[this.#chatService.messages().length - 1].text.includes("Déconnecté avec succès.")) {
+      return false;
+    }
+    return true;
+  });
 
 
   removeUserId(userId: string) {
