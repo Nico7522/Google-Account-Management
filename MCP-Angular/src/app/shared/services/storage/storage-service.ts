@@ -17,7 +17,7 @@ export class StorageService {
     if(this.userId() === undefined) {
       return false;
     }
-    if(this.#chatService.messages().length > 0 && this.#chatService.messages()[this.#chatService.messages().length - 1].text.includes("Déconnecté avec succès.")) {
+    if(this.#chatService.messages().length > 0 && this.#chatService.messages().some(message => message.text.includes("Déconnecté avec succès."))) {
       return false;
     }
     return true;

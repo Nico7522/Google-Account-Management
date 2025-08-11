@@ -203,6 +203,7 @@ async function logout(userID: string) {
   try {
     const tokens = getFakeDb()[userID];
     removeFakeDb(userID);
+
     await oauth2Client.revokeToken(tokens.accessToken);
   } catch (error) {
     throw error;
