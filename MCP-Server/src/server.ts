@@ -134,28 +134,35 @@ server.tool("getMyCalendar", async () => {
   };
 });
 
-server.tool("getMyGmail", "Get My Gmail", async () => {
-  const isAuthenticated = await setAccessToken();
-  if (!isAuthenticated) {
+server.tool(
+  "getMyMails",
+  "Get My Mails",
+  {
+    userId: z.string(),
+  },
+  async ({ userId }) => {
+    const isAuthenticated = await setAccessToken(userId);
+    if (!isAuthenticated) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Vous n'êtes pas authentifié",
+          },
+        ],
+      };
+    }
+
     return {
       content: [
         {
           type: "text",
-          text: "Vous n'êtes pas authentifié",
+          text: JSON.stringify(await getMyGmail()),
         },
       ],
     };
   }
-
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(await getMyGmail()),
-      },
-    ],
-  };
-});
+);
 
 /**
  * Get the authentication URL
@@ -198,31 +205,63 @@ async function getTokens(code: string): Promise<string> {
     throw error;
   }
 }
-
+/**
+ * Logout the user by revoking the tokens
+ * @param userID - The user id
+ */
 async function logout(userID: string) {
   try {
     const tokens = getFakeDb()[userID];
-    removeFakeDb(userID);
 
-    await oauth2Client.revokeToken(tokens.accessToken);
+    if (tokens && tokens.accessToken) {
+      try {
+        oauth2Client.setCredentials({
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+        });
+
+        const oauth2 = google.oauth2({
+          version: "v2",
+          auth: oauth2Client,
+        });
+        await oauth2.userinfo.get();
+
+        await oauth2Client.revokeToken(tokens.accessToken);
+      } catch (tokenError) {}
+    }
+
+    removeFakeDb(userID);
   } catch (error) {
     throw error;
   }
 }
 
 /**
- * Get the access token from the token.json file and set it to the oauth2Client
+ * Get the access token from the fake_db.json file and set it to the oauth2Client
+ * @param userId - Optional user ID. If not provided, uses the first available user's tokens
  * @returns True if the access token is set, false otherwise
  */
-async function setAccessToken() {
+async function setAccessToken(userId?: string) {
   try {
-    const tokens = await fs.promises.readFile(
-      path.resolve(__dirname, "../../token.json"),
-      "utf-8"
-    );
-    if (!tokens) return false;
+    const fakeDb = getFakeDb();
 
-    oauth2Client.setCredentials(JSON.parse(tokens));
+    const targetUserId = userId || Object.keys(fakeDb)[0];
+
+    if (!targetUserId || !fakeDb[targetUserId]) {
+      return false;
+    }
+
+    const tokens = fakeDb[targetUserId];
+
+    if (!tokens.accessToken) {
+      return false;
+    }
+
+    oauth2Client.setCredentials({
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    });
+
     return true;
   } catch (error) {
     return false;
