@@ -21,6 +21,7 @@ export class Chat {
   userInput = '';
   handleCommand(command: Command) {
     const prompt = commandToPromptAndMessage(command, this.#storageService.userId());
+    
     this.#chatService.addUserMessage(prompt.message);
     this.#chatService.setPrompt(prompt.prompt);
   }

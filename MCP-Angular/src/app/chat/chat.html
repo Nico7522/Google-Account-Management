@@ -4,8 +4,7 @@
     <!-- Zone de messages -->
     <main class="chat-messages" #messagesContainer>
         @for (message of messages(); track $index) {
-        <div [class]="message.role.toLowerCase()" [innerHTML]="message.text"></div>
-
+        <div [class]="message.role" [innerHTML]="message.parts[0].text"></div>
         }
     </main>
     @if (isLoading()) {

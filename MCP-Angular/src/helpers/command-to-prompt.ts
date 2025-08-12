@@ -16,7 +16,7 @@ export function commandToPromptAndMessage(command: Command, userId?: string): Pr
       };
     case '2':
       return {
-        prompt: 'Donne moi les 10 mails les plus récents. Voici mon id: ' + userId,
+        prompt: `Donne moi les 10 mails les plus récents. Voici mon id: ${userId}`,
         message: 'Donne moi les 10 mails les plus récents.'
       };
     case '3':
