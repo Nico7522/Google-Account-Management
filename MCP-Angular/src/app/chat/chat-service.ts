@@ -60,6 +60,7 @@ export class ChatService {
    * @param prompt
    */
   setPrompt(prompt: string): void {
+    this.#prompt.set(undefined);
     this.#prompt.set(prompt);
   }
 
