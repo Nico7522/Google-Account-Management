@@ -38,7 +38,9 @@ async function main() {
     const chatHandler = async (req: Request, res: Response) => {
       try {
         const { query } = req.body;
-
+        query.forEach((message: any) => {
+          console.log(message.parts[0].text);
+        });
         if (!query) {
           return res.status(400).json({ error: "Query is required" });
         }
