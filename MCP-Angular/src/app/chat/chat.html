@@ -3,7 +3,7 @@
 
     <!-- Zone de messages -->
     <main class="chat-messages" #messagesContainer>
-        @for (message of messages(); track $index) {
+        @for (message of messages().chatMessage; track $index) {
         <div [class]="message.role" [innerHTML]="message.parts[0].text"></div>
         }
     </main>

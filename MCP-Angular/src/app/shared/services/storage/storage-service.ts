@@ -3,7 +3,7 @@ import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { ChatService } from '../../../chat/chat-service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class StorageService {
   readonly #platformId = inject(PLATFORM_ID);
@@ -14,16 +14,22 @@ export class StorageService {
   userId = this.#userId.asReadonly();
   // Computed signal to know if the user is logged in
   isLoggedIn = computed(() => {
-    if(this.userId() === undefined) {
+    if (this.userId() === undefined) {
       return false;
     }
-    if(this.#chatService.messages().length > 0 && this.#chatService.messages().some(message => message.parts[0].text.includes("Déconnecté avec succès."))) {
+    if (
+      this.#chatService.messages().AImessage.length > 0 &&
+      this.#chatService.messages().AImessage.some(message => message.parts[0].text.includes('Déconnecté avec succès.'))
+    ) {
       return false;
     }
     return true;
   });
 
-
+  /**
+   * Remove the user id from the local storage
+   * @param userId - The user id to remove
+   */
   removeUserId(userId: string) {
     if (!isPlatformBrowser(this.#platformId)) {
       return;
@@ -40,7 +46,7 @@ export class StorageService {
     if (!isPlatformBrowser(this.#platformId)) {
       return undefined;
     }
-    
+
     return localStorage.getItem('userId') ?? undefined;
   }
 }

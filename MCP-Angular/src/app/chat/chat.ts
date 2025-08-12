@@ -21,15 +21,14 @@ export class Chat {
   userInput = '';
   handleCommand(command: Command) {
     const prompt = commandToPromptAndMessage(command, this.#storageService.userId());
-    
-    this.#chatService.addUserMessage(prompt.message);
-    this.#chatService.setPrompt(prompt.prompt);
+    this.#chatService.setPrompt(prompt);
   }
 
   onSubmit() {
-    this.#chatService.setPrompt(this.userInput);
-    this.#chatService.addUserMessage(this.userInput);
+    this.#chatService.setPrompt({prompt: this.userInput, message: this.userInput});
     this.userInput = '';
   }
+
+
 
 }
