@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ChatService } from './chat-service';
 import { commandToPromptAndMessage } from '../../helpers/command-to-prompt';
 import { Command } from '../shared/models/command-type';
@@ -25,10 +25,7 @@ export class Chat {
   }
 
   onSubmit() {
-    this.#chatService.setPrompt({prompt: this.userInput, message: this.userInput});
+    this.#chatService.setPrompt({ prompt: this.userInput, message: this.userInput });
     this.userInput = '';
   }
-
-
-
 }

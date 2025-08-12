@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import { Request, Response } from "express";
 import express from "express";
 import cors from "cors";
-import { processQuery } from "./openAI/open-ai";
 import { McpClient } from "./config/client";
 import { callGemini } from "./googleAI/gemini";
 const cookieParser = require("cookie-parser");

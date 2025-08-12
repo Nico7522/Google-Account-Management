@@ -1,11 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, linkedSignal, resource, signal } from '@angular/core';
+import { inject, Injectable, linkedSignal, resource, signal } from '@angular/core';
 import { catchError, lastValueFrom, of } from 'rxjs';
 import { ToastService } from '../shared/toast/toast-service';
 import { marked } from 'marked';
-import { Message } from '../shared/models/message-interface';
 import { Chat } from '../shared/models/chat-interface';
-import { Command } from '../shared/models/command-type';
 import { PromptAndMessage } from '../shared/models/prompt-and-message-interface';
 @Injectable({
   providedIn: 'root',
