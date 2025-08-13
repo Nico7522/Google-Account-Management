@@ -20,13 +20,16 @@ const server = new McpServer({
 
 server.tool(
   "getAuthUrl",
+  "Give url to allow user to connect to his Google account and use other tools",
   {
     title: "Get Auth URL",
     description: "Get the authentication URL to connect to Google APIs",
   },
   async () => {
     try {
-      // await startHttpServer();
+      if (process.env.CONSUMMER === "all_client") {
+        await startHttpServer();
+      }
       const { url } = await getAuthUrl();
 
       return {
@@ -164,6 +167,25 @@ server.tool(
   }
 );
 
+server.tool(
+  "createAndWriteGoogleDoc",
+  "Create and write a Google Doc",
+  {
+    title: z.string(),
+    content: z.string(),
+  },
+  async ({ title, content }) => {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(await createAndWriteGoogleDoc(title, content)),
+        },
+      ],
+    };
+  }
+);
+
 /**
  * Get the authentication URL
  * @returns The authentication URL
@@ -241,6 +263,33 @@ async function logout(userID: string) {
  * @param userId - Optional user ID. If not provided, uses the first available user's tokens
  * @returns True if the access token is set, false otherwise
  */
+// async function setAccessToken(userId?: string) {
+//   try {
+//     const fakeDb = getFakeDb();
+
+//     const targetUserId = userId || Object.keys(fakeDb)[0];
+
+//     if (!targetUserId || !fakeDb[targetUserId]) {
+//       return false;
+//     }
+
+//     const tokens = fakeDb[targetUserId];
+
+//     if (!tokens.accessToken) {
+//       return false;
+//     }
+
+//     oauth2Client.setCredentials({
+//       access_token: tokens.accessToken,
+//       refresh_token: tokens.refreshToken,
+//     });
+
+//     return true;
+//   } catch (error) {
+//     return false;
+//   }
+// }
+
 async function setAccessToken(userId?: string) {
   try {
     const fakeDb = getFakeDb();
@@ -376,26 +425,96 @@ async function getMailById(id: string) {
 }
 
 /**
+ * Create a new Google Doc and write content to it
+ * @param title - The title of the document
+ * @param content - The content to write in the document (can include formatted text)
+ * @returns The created document details or error message
+ */
+async function createAndWriteGoogleDoc(title: string, content: string) {
+  try {
+    // Set the access token
+    const tokenSet = await setAccessToken();
+    if (!tokenSet) {
+      throw new Error("Failed to set access token");
+    }
+
+    // Initialize Google Docs API
+    const docs = google.docs({ version: "v1", auth: oauth2Client });
+
+    // Step 1: Create a new document with a title
+    const createResponse = await docs.documents.create({
+      requestBody: {
+        title: title,
+      },
+    });
+
+    const documentId = createResponse.data.documentId;
+
+    if (!documentId) {
+      throw new Error("Failed to create document");
+    }
+
+    // Step 2: Write content to the document
+    const requests = [
+      {
+        insertText: {
+          location: {
+            index: 1, // Index 1 is the start of the document body
+          },
+          text: content,
+        },
+      },
+    ];
+
+    const updateResponse = await docs.documents.batchUpdate({
+      documentId: documentId,
+      requestBody: {
+        requests: requests,
+      },
+    });
+
+    // Return document details
+    return {
+      documentId: documentId,
+      title: createResponse.data.title ?? "",
+      revisionId: createResponse.data.revisionId ?? "",
+      documentUrl: `https://docs.google.com/document/d/${documentId}/edit`,
+    };
+  } catch (error) {
+    return (error as Error).message;
+  }
+}
+
+/**
  * Start the HTTP server for handling the access token
  */
-let httpServer: http.Server;
+let httpServer: http.Server | undefined;
 async function startHttpServer() {
+  if (httpServer && httpServer.listening) {
+    // Server is already running
+    return;
+  }
   httpServer = http.createServer(async (req, res) => {
-    if (req.url!.includes("/oauth2callback")) {
-      const callbackUrl = new URL(req.url!, `http://localhost:3200`);
+    if (req.url && req.url.includes("/oauth2callback")) {
+      const callbackUrl = new URL(req.url, `http://localhost:3000`);
       const code = callbackUrl.searchParams.get("code");
       try {
         const { tokens } = await oauth2Client.getToken(code ?? "");
         oauth2Client.setCredentials(tokens);
-
-        await fs.promises.writeFile(
-          path.resolve(__dirname, "../../token.json"),
-          JSON.stringify(tokens),
-          "utf-8"
-        );
+        const oauth2 = google.oauth2({
+          version: "v2",
+          auth: oauth2Client,
+        });
+        const userInfo = await oauth2.userinfo.get();
+        if (!userInfo.data.id) throw new Error("User ID not found");
+        setFakeDb(userInfo.data.id, {
+          accessToken: tokens.access_token ?? "",
+          refreshToken: tokens.refresh_token ?? "",
+        });
         res.end("✅ Authentification réussie. Vous pouvez fermer cette page.");
 
-        httpServer.close();
+        httpServer?.close();
+        httpServer = undefined;
       } catch (error) {
         res.end(
           `❌ Échec: ${error instanceof Error ? error.message : String(error)}`
@@ -404,7 +523,7 @@ async function startHttpServer() {
     }
   });
 
-  httpServer.listen(3200);
+  httpServer.listen(3000);
 }
 
 /**
